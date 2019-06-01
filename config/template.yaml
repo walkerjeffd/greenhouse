@@ -1,5 +1,5 @@
 cron:
-  schedule: '*/5 * * * * *'
+  schedule: '0 */5 * * * *'
 influx:
   host:
   database:
