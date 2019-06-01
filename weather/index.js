@@ -44,6 +44,7 @@ const darksky = new DarkSky(darkskyConfig.key);
 //   })
 
 function getForecast() {
+  console.log('getForecast()')
   darksky.forecast(
     darkskyConfig.latitude,
     darkskyConfig.longitude,
@@ -83,6 +84,7 @@ function getForecast() {
       ];
 
       influx.writePoints(points)
+        .then(() => console.log('Points saved to InfluxDB'))
         .catch(err => {
           console.error('Error writing to InfluxDB', err);
         });
@@ -92,6 +94,7 @@ function getForecast() {
 
 if (cronConfig.schedule) {
   cron.schedule(cronConfig.schedule, function() {
+    console.log('calling getForecast')
     getForecast();
   });
   console.log(`DarkSky data will be written to InfluxDB on cron interval '${cronConfig.schedule}'`);
