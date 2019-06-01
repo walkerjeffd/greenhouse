@@ -1,0 +1,10 @@
+cron:
+  schedule: '*/5 * * * * *'
+influx:
+  host:
+  database:
+darksky:
+  key:
+  units: us
+  longitude:
+  latitude:
