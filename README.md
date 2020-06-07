@@ -216,7 +216,7 @@ These configuration files use environmental variables, which must be defined in 
 
 ```ini
 INFLUX_DB="<DATABASE NAME (greenhouse)>"
-MQTT_REGION="<TNN REGION (eu)>"
+MQTT_HANDLER="<TNN HANDLER (eu.thethings.network)>"
 MQTT_APPLICATION_ID="<APPLICATION ID (my-greenhouse)>"
 MQTT_ACCESS_KEY="<ACCESS KEY (ttn-account-v2.XXXXX)>"
 ```
@@ -226,7 +226,7 @@ Use the TTN console to generate an access key which should have the form: `ttn-a
 Use the [mosquitto](https://mosquitto.org/) CLI to test the MQTT parameters.
 
 ```sh
-mosquitto_sub -h ${MQTT_REGION}.thethings.network -t '+/devices/+/up' -u '${MQTT_APPLICATION_ID}' -P '${MQTT_ACCESS_KEY}' -v
+mosquitto_sub -h '${MQTT_HANDLER}' -t '+/devices/+/up' -u '${MQTT_APPLICATION_ID}' -P '${MQTT_ACCESS_KEY}' -v
 ```
 
 If all looks good, start telegraf:
