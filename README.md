@@ -6,7 +6,7 @@ Jeffrey D Walker, PhD <jeff@walkerenvres.com>
 
 ## About
 
-This repo contains the source code and instructions for setting up an ambient monitoring system. The system was designed specifically to monitor temperature and humidity levels in my greenhouse. However, it could be adapted to a variety of use cases with different sensors.
+This repo contains the source code and instructions for an ambient monitoring system designed specifically to monitor temperature and humidity levels in my greenhouse. However, it could be adapted to a variety of use cases with different sensors.
 
 ## Overview
 
@@ -178,9 +178,30 @@ Then create a new database named `greenhouse`.
 CREATE DATABASE greenhouse;
 ```
 
-Set retention policies
+Use default retention policy `autogen` which has infinite duration.
 
-Set continuous queries
+```text
+> show retention policies
+name    duration shardGroupDuration replicaN default
+----    -------- ------------------ -------- -------
+autogen 0s       168h0m0s           1        true
+```
+
+Add continuous queries for converting raw data to 1-minute intervals in measurement `data_1m`, and aggregating min/mean/max values to daily intervals in measurement `data_1day`.
+
+```sql
+CREATE CONTINUOUS QUERY cq_data_1m ON greenhouse BEGIN SELECT mean(payload_fields_temperature_1) AS temp_degC, mean(payload_fields_relative_humidity_1) AS humidity_pct, mean(metadata_gateways_0_rssi) AS rssi, mean(metadata_gateways_0_snr) AS snr INTO greenhouse.autogen.data_1m FROM greenhouse.autogen.mqtt_consumer GROUP BY time(1m), * END
+
+CREATE CONTINUOUS QUERY cq_data_1d ON greenhouse BEGIN SELECT min(temp_degC) AS temp_degC_min, mean(temp_degC) AS temp_degC_mean, max(temp_degC) AS temp_degC_max, min(humidity_pct) AS humidity_pct_min, mean(humidity_pct) AS humidity_pct_mean, max(humidity_pct) AS humidity_pct_max INTO greenhouse.autogen.data_1d FROM greenhouse.autogen.data_1m GROUP BY time(1d), * TZ('America/New_York') END
+```
+
+If CQ is added after data has been collected, then backfill using this query:
+
+```
+SELECT mean(payload_fields_temperature_1) AS temp_degC, mean(payload_fields_relative_humidity_1) AS humidity_pct, mean(metadata_gateways_0_rssi) AS rssi, mean(metadata_gateways_0_snr) AS snr INTO greenhouse.autogen.data_1m FROM greenhouse.autogen.mqtt_consumer GROUP BY time(1m), *
+
+SELECT min(temp_degC) AS temp_degC_min, mean(temp_degC) AS temp_degC_mean, max(temp_degC) AS temp_degC_max, min(humidity_pct) AS humidity_pct_min, mean(humidity_pct) AS humidity_pct_mean, max(humidity_pct) AS humidity_pct_max INTO greenhouse.autogen.data_1d FROM greenhouse.autogen.data_1m WHERE time < '2020-06-08T04:00:00Z' GROUP BY time(1d), * TZ('America/New_York')
+```
 
 ### Data Streaming (Telegraf)
 
@@ -291,6 +312,21 @@ tagKey
 ------
 host
 topic
+
+> select time, counter, payload_fields_relative_humidity_1, payload_fields_temperature_1 from mqtt_consumer order by time desc limit 10
+name: mqtt_consumer
+time                           counter payload_fields_relative_humidity_1 payload_fields_temperature_1
+----                           ------- ---------------------------------- ----------------------------
+2020-06-08T18:31:03.03027641Z  1393    29                                 28.4
+2020-06-08T18:29:59.943674131Z 1392    30.5                               28.4
+2020-06-08T18:28:56.870925368Z 1391    30                                 28.4
+2020-06-08T18:27:53.687764314Z 1390    30                                 28.4
+2020-06-08T18:26:50.618294112Z 1389    30.5                               28.3
+2020-06-08T18:25:47.438324225Z 1388    30.5                               28.3
+2020-06-08T18:24:44.363127269Z 1387    28.5                               28.2
+2020-06-08T18:23:41.281444938Z 1386    29                                 28.2
+2020-06-08T18:22:38.107200301Z 1385    30                                 28.1
+2020-06-08T18:21:35.035556816Z 1384    30.5                               28
 ```
 
 **References**
