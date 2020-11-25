@@ -247,7 +247,7 @@ Use the TTN console to generate an access key which should have the form: `ttn-a
 Use the [mosquitto](https://mosquitto.org/) CLI to test the MQTT parameters.
 
 ```sh
-mosquitto_sub -h '${MQTT_HANDLER}' -t '+/devices/+/up' -u '${MQTT_APPLICATION_ID}' -P '${MQTT_ACCESS_KEY}' -v
+mosquitto_sub -h ${MQTT_HANDLER} -t '+/devices/+/up' -u ${MQTT_APPLICATION_ID} -P ${MQTT_ACCESS_KEY} -v
 ```
 
 If all looks good, start telegraf:
